@@ -1,23 +1,21 @@
-FROM golang:1.13  as building-stage
+FROM golang:1.20  as building-stage
 
-RUN go get github.com/fluent/fluent-bit-go/output && \ 
-    go get github.com/streadway/amqp
+RUN mkdir /build
+COPY ./*.go ./*.mod ./*.sum /build
 
-COPY ./*.go /go/src/
+COPY ./Makefile /build
 
-COPY ./Makefile /go/src
-
-WORKDIR /go/src
+WORKDIR /build
 
 RUN make
 
-FROM fluent/fluent-bit:1.3
+FROM fluent/fluent-bit:2.0.9
 
-LABEL maintainer="Björn Franke"
+LABEL maintainer="Denis Zheleztsov"
 
-COPY --from=building-stage /go/src/out_rabbitmq.so  /fluent-bit/bin/
+COPY --from=building-stage /build/out_rabbitmq.so  /fluent-bit/bin/
 COPY ./conf/fluent-bit-docker.conf /fluent-bit/etc
 
 EXPOSE 2020
 
-CMD ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit-docker.conf","-e","/fluent-bit/bin/out_rabbitmq.so"]
+CMD [ "/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit-docker.conf", "-e", "/fluent-bit/bin/out_rabbitmq.so" ]
