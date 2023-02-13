@@ -19,6 +19,7 @@ build
 | RabbitHost                   | The hostname of the Rabbit-MQ server                                                            | ""            |
 | RabbitPort                   | The port under which the Rabbit-MQ is reachable                                                 | ""            |
 | RabbitScheme                 | The scheme                                                                                      | "amqp"        |
+| RabbitVerifyTLS              | Verify TLS connection                                                                           | "no"          |
 | RabbitUser                   | The user of the Rabbit-MQ host                                                                  | ""            |
 | RabbitPassword               | The username of the user which connects to the Rabbit-MQ server                                 | ""            |
 | ExchangeName                 | The exchange to which fluent-bit send its logs                                                  | ""            |

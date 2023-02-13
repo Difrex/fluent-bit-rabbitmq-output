@@ -10,6 +10,7 @@ import (
 	"github.com/fluent/fluent-bit-go/output"
 	"github.com/streadway/amqp"
 )
+import "crypto/tls"
 
 var (
 	connection               *amqp.Connection
@@ -37,6 +38,7 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	host := output.FLBPluginConfigKey(plugin, "RabbitHost")
 	port := output.FLBPluginConfigKey(plugin, "RabbitPort")
 	scheme = output.FLBPluginConfigKey(plugin, "RabbitScheme")
+	verifyTLS := output.FLBPluginConfigKey(plugin, "RabbitVerifyTLS")
 	user := output.FLBPluginConfigKey(plugin, "RabbitUser")
 	password := output.FLBPluginConfigKey(plugin, "RabbitPassword")
 	exchangeName = output.FLBPluginConfigKey(plugin, "ExchangeName")
@@ -61,6 +63,11 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	if len(scheme) < 1 {
 		scheme = "amqp"
 		logInfo("Use default scheme amqp")
+	}
+
+	if len(verifyTLS) < 1 {
+		verifyTLS = "yes"
+		logInfo("Verify TLS connection: yes")
 	}
 
 	removeRkValuesFromRecord, err = strconv.ParseBool(removeRkValuesFromRecordStr)
@@ -101,11 +108,21 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 		Vhost:    vhost,
 	}
 
-	connection, err = amqp.Dial(config.String())
-	if err != nil {
-		logError("Failed to establish a connection to RabbitMQ: ", err)
-		logError("connection: "+config.String(), err)
-		return output.FLB_ERROR
+	var connection *amqp.Connection
+	if scheme == "amqps" {
+		connection, err = amqp.DialTLS(config.String(), &tls.Config{InsecureSkipVerify: verifyTLS == "no"})
+		if err != nil {
+			logError("Failed to establish a connection to RabbitMQ: ", err)
+			logError("connection: "+config.String(), err)
+			return output.FLB_ERROR
+		}
+	} else {
+		connection, err = amqp.Dial(config.String())
+		if err != nil {
+			logError("Failed to establish a connection to RabbitMQ: ", err)
+			logError("connection: "+config.String(), err)
+			return output.FLB_ERROR
+		}
 	}
 
 	channel, err = connection.Channel()
