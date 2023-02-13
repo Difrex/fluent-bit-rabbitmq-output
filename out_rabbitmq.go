@@ -15,6 +15,7 @@ var (
 	connection               *amqp.Connection
 	channel                  *amqp.Channel
 	exchangeName             string
+	scheme                   string
 	routingKey               string
 	routingKeyDelimiter      string
 	removeRkValuesFromRecord bool
@@ -35,6 +36,7 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 
 	host := output.FLBPluginConfigKey(plugin, "RabbitHost")
 	port := output.FLBPluginConfigKey(plugin, "RabbitPort")
+	scheme = output.FLBPluginConfigKey(plugin, "RabbitScheme")
 	user := output.FLBPluginConfigKey(plugin, "RabbitUser")
 	password := output.FLBPluginConfigKey(plugin, "RabbitPassword")
 	exchangeName = output.FLBPluginConfigKey(plugin, "ExchangeName")
@@ -54,6 +56,11 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	if len(vhost) < 1 {
 		vhost = "/"
 		logInfo("Use default vhost /")
+	}
+
+	if len(scheme) < 1 {
+		scheme = "amqp"
+		logInfo("Use default scheme amqp")
 	}
 
 	removeRkValuesFromRecord, err = strconv.ParseBool(removeRkValuesFromRecordStr)
@@ -86,7 +93,7 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 		return output.FLB_ERROR
 	}
 	config := amqp.URI{
-		Scheme:   "amqp",
+		Scheme:   scheme,
 		Host:     host,
 		Port:     portInt,
 		Username: user,
