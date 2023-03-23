@@ -1,7 +1,7 @@
 FROM golang:1.20  as building-stage
 
 RUN mkdir /build
-COPY ./*.go ./*.mod ./*.sum /build
+COPY ./*.go ./*.mod ./*.sum /build/
 
 COPY ./Makefile /build
 
