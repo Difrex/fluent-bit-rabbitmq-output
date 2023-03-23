@@ -14,8 +14,8 @@ FROM fluent/fluent-bit:2.0.9
 LABEL maintainer="Denis Zheleztsov"
 
 COPY --from=building-stage /build/out_rabbitmq.so  /fluent-bit/bin/
-COPY ./conf/fluent-bit-docker.conf /fluent-bit/etc
+COPY ./conf/fluent-bit.conf /fluent-bit/etc
 
 EXPOSE 2020
 
-CMD [ "/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit-docker.conf", "-e", "/fluent-bit/bin/out_rabbitmq.so" ]
+CMD [ "/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf", "-e", "/fluent-bit/bin/out_rabbitmq.so" ]
