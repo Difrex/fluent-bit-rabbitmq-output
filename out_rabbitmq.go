@@ -22,6 +22,7 @@ var (
 	removeRkValuesFromRecord bool
 	addTagToRecord           bool
 	addTimestampToRecord     bool
+	timestampField           string
 )
 
 //export FLBPluginRegister
@@ -48,6 +49,7 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	removeRkValuesFromRecordStr := output.FLBPluginConfigKey(plugin, "RemoveRkValuesFromRecord")
 	addTagToRecordStr := output.FLBPluginConfigKey(plugin, "AddTagToRecord")
 	addTimestampToRecordStr := output.FLBPluginConfigKey(plugin, "AddTimestampToRecord")
+	timestampFieldUse := output.FLBPluginConfigKey(plugin, "TimestampField")
 	vhost := output.FLBPluginConfigKey(plugin, "RabbitVHost")
 
 	if len(routingKeyDelimiter) < 1 {
@@ -68,6 +70,14 @@ func FLBPluginInit(plugin unsafe.Pointer) int {
 	if len(verifyTLS) < 1 {
 		verifyTLS = "yes"
 		logInfo("Verify TLS connection: yes")
+	}
+
+	if len(timestampField) < 1 {
+		timestampField = "@timestamp"
+		logInfo("Timestamp field is @timestamp")
+	} else {
+		timestampField = timestampFieldUse
+		logInfo("Timestamp field is " + timestampField)
 	}
 
 	removeRkValuesFromRecord, err = strconv.ParseBool(removeRkValuesFromRecordStr)
@@ -175,7 +185,7 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 			parsedRecord["@tag"] = C.GoString(tag)
 		}
 		if addTimestampToRecord {
-			parsedRecord["@timestamp"] = timestamp.String()
+			parsedRecord[timestampField] = timestamp.String()
 		}
 
 		rk, err := CreateRoutingKey(routingKey, &parsedRecord, routingKeyDelimiter)
@@ -202,6 +212,7 @@ func FLBPluginFlushCtx(ctx, data unsafe.Pointer, length C.int, tag *C.char) int 
 			})
 		if err != nil {
 			logError("Couldn't publish record: ", err)
+			return output.FLB_ERROR
 		}
 	}
 	return output.FLB_OK
